@@ -1,0 +1,115 @@
+name: Build and publish iOS dictionary
+
+on:
+  workflow_dispatch:
+    inputs:
+      dictionary_version:
+        description: "Version number (leave EMPTY to auto-increment from latest.json)"
+        required: false
+        type: string
+      release_notes:
+        description: "Release notes (optional)"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history so commit/push can rebase cleanly
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Determine version
+        id: ver
+        run: |
+          if [ -n "${{ inputs.dictionary_version }}" ]; then
+            V="${{ inputs.dictionary_version }}"
+          else
+            CUR=$(python3 -c "import json; print(json.load(open('public/latest.json'))['dictionary_version'])")
+            V=$((CUR + 1))
+          fi
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+          echo "Publishing dictionary version: $V"
+
+      - name: Run normalization tests
+        run: python tests/test_normalization.py
+
+      - name: Download sources
+        run: python scripts/download_sources.py   # av-ru.jsonl + ru-av.jsonl
+
+      - name: Analyze sources
+        run: python scripts/analyze_sources.py
+
+      - name: Build dictionary
+        run: |
+          python scripts/build_dictionary.py \
+            --version "${{ steps.ver.outputs.version }}" \
+            --notes "${{ inputs.release_notes }}"
+
+      - name: Validate (quality gates)
+        run: python scripts/validate_dictionary.py
+
+      - name: Package release
+        run: python scripts/package_release.py --version "${{ steps.ver.outputs.version }}"
+
+      - name: Generate latest.json
+        run: |
+          python scripts/generate_latest.py \
+            --version "${{ steps.ver.outputs.version }}" \
+            --notes "${{ inputs.release_notes }}"
+
+      - name: Commit published files
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add public/
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "Publish dictionary v${{ steps.ver.outputs.version }}"
+          # Remote may have advanced; rebase and retry the push a few times.
+          for i in 1 2 3; do
+            git pull --rebase --autostash origin "${GITHUB_REF_NAME}" || true
+            if git push origin "HEAD:${GITHUB_REF_NAME}"; then
+              echo "Pushed."; break
+            fi
+            echo "Push attempt $i failed, retrying…"; sleep 3
+          done
+
+      # Deploy here directly: a push made by GITHUB_TOKEN does NOT trigger the
+      # separate deploy-pages.yml workflow, so the build must publish itself.
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload public/ artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+# GitHub Pages is configured as build_type=workflow; this workflow both builds
+# the release and deploys public/ to ios.avar.me in one run.
+# Old releases are kept in public/releases for rollback (see PLAN.md §17).
