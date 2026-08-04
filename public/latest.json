@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
-  "dictionary_version": 5,
-  "build_id": "2026-08-04T21-38-34Z",
+  "dictionary_version": 6,
+  "build_id": "2026-08-04T22-05-25Z",
   "sources": [
     {
       "name": "av-ru",
       "url": "https://sources.avar.me/data/av-ru.jsonl",
-      "sha256": "2341ad2c5b188d52c04e8bb5e9ec23802c3e663fb7024f5cae6a2096df5775ef"
+      "sha256": "18cb9062cb8d674d2278819aa7f59512a69db8c633d2ffe7de72d9ef99d33209"
     },
     {
       "name": "ru-av",
@@ -25,10 +25,10 @@
     }
   },
   "entry_count_total": 61721,
-  "package_url": "https://android.avar.me/releases/dictionary-v5.zip",
-  "package_sha256": "7cc4c290fe3ec637bd5933480c58c54fe2ba8ff1935ca2bcd9d2f1e2b122c74a",
-  "package_size_bytes": 15309264,
-  "created_at": "2026-08-04T21:38:34Z",
+  "package_url": "https://android.avar.me/releases/dictionary-v6.zip",
+  "package_sha256": "3cadfe234c2a56d5e6097745a4fa6fc6bc032e21c01a9a2428d512c9512c2ca9",
+  "package_size_bytes": 15309287,
+  "created_at": "2026-08-04T22:05:25Z",
   "min_app_version": "1.0.0",
   "notes": ""
 }
