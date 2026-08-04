@@ -15,7 +15,7 @@ from config import DATA_DIR, SOURCES
 
 
 def download(url: str, dest) -> int:
-    req = urllib.request.Request(url, headers={"User-Agent": "avar-ios-pipeline"})
+    req = urllib.request.Request(url, headers={"User-Agent": "avar-android-pipeline"})
     with urllib.request.urlopen(req, timeout=120) as resp:
         data = resp.read()
     dest.write_bytes(data)
