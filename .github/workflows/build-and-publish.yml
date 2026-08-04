@@ -1,4 +1,4 @@
-name: Build and publish iOS dictionary
+name: Build and publish Android dictionary
 
 on:
   workflow_dispatch:
@@ -111,5 +111,5 @@ jobs:
         uses: actions/deploy-pages@v4
 
 # GitHub Pages is configured as build_type=workflow; this workflow both builds
-# the release and deploys public/ to ios.avar.me in one run.
+# the release and deploys public/ to android.avar.me in one run.
 # Old releases are kept in public/releases for rollback (see PLAN.md §17).
